@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Contacts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 30px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .form-box, .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 28%;
+        }
+
+        button {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .add-btn { background: #4CAF50; color: white; }
+        .edit-btn { background: #2196F3; color: white; }
+        .delete-btn { background: #f44336; color: white; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .card small {
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+<h2>My Contacts</h2>
+
+<div class="form-box">
+    <input type="text" id="name" placeholder="Name">
+    <input type="email" id="email" placeholder="Email">
+    <input type="number" id="phone" placeholder="Phone">
+    <button class="add-btn" id="addBtn">Add Contact</button>
+</div>
+
+<div class="search-box">
+    <input type="text" id="search" placeholder="Search by name or email..." style="width:90%;">
+</div>
+
+<div class="cards" id="contactList"></div>
+
+<script>
+let contacts = JSON.parse(localStorage.getItem("contacts")) || [];
+let editIndex = null;
+
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const phoneInput = document.getElementById("phone");
+const contactList = document.getElementById("contactList");
+const addBtn = document.getElementById("addBtn");
+const searchInput = document.getElementById("search");
+
+function saveToLocal() {
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+}
+
+function renderContacts(filter = "") {
+    contactList.innerHTML = "";
+
+    contacts
+    .filter(c => 
+        c.name.toLowerCase().includes(filter.toLowerCase()) ||
+        c.email.toLowerCase().includes(filter.toLowerCase())
+    )
+    .forEach((contact, index) => {
+        contactList.innerHTML += `
+            <div class="card">
+                <h3>${contact.name}</h3>
+                <small>${contact.email}</small><br>
+                <small>${contact.phone}</small><br><br>
+                <button class="edit-btn" data-index="${index}">Edit</button>
+                <button class="delete-btn" data-index="${index}">Delete</button>
+            </div>
+        `;
+    });
+}
+
+addBtn.addEventListener("click", () => {
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const phone = phoneInput.value.trim();
+
+    if (!name || !email || !phone) {
+        alert("All fields are required!");
+        return;
+    }
+
+    if (editIndex !== null) {
+        contacts[editIndex] = { name, email, phone };
+        editIndex = null;
+        addBtn.textContent = "Add Contact";
+    } else {
+        contacts.push({ name, email, phone });
+    }
+
+    saveToLocal();
+    renderContacts();
+    nameInput.value = "";
+    emailInput.value = "";
+    phoneInput.value = "";
+});
+
+contactList.addEventListener("click", (e) => {
+    const index = e.target.dataset.index;
+
+    if (e.target.classList.contains("delete-btn")) {
+        contacts.splice(index, 1);
+        saveToLocal();
+        renderContacts();
+    }
+
+    if (e.target.classList.contains("edit-btn")) {
+        const contact = contacts[index];
+        nameInput.value = contact.name;
+        emailInput.value = contact.email;
+        phoneInput.value = contact.phone;
+        editIndex = index;
+        addBtn.textContent = "Update Contact";
+    }
+});
+
+searchInput.addEventListener("input", () => {
+    renderContacts(searchInput.value);
+});
+
+renderContacts();
+</script>
+
+</body>
+</html>
